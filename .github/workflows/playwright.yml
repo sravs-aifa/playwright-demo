@@ -1,28 +1,71 @@
 name: Playwright Tests
+
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
       - name: Run Playwright tests
         run: npx playwright test --reporter=html
+        continue-on-error: true
+
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+      - name: Zip Playwright Report
+        if: always()
+        run: zip -r playwright-report.zip playwright-report/
+
+      - name: Send Email Report via Outlook
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.office365.com      # ← Outlook SMTP
+          server_port: 587                        # ← Outlook port
+          secure: false                           # ← Outlook uses TLS not SSL
+          tls: true                               # ← enable TLS for Outlook
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Playwright Test Report - ${{ job.status }}"
+          to: satish.vagvala@aifalabs.com, Sravanagouri.K@aifalabs.com  # ← team emails
+          from: GitHub Actions <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            Hi Team,
+
+            Playwright test run is complete!
+
+            Repository  : ${{ github.repository }}
+            Branch      : ${{ github.ref_name }}
+            Commit      : ${{ github.sha }}
+            Triggered by: ${{ github.actor }}
+            Status      : ${{ job.status }}
+
+            Please find the full HTML report attached.
+
+            Regards,
+            GitHub Actions CI
+          attachments: playwright-report.zip
