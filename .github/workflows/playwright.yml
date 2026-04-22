@@ -44,14 +44,13 @@ jobs:
         if: always()
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: smtp.office365.com      # ← Outlook SMTP
-          server_port: 587                        # ← Outlook port
-          secure: false                           # ← Outlook uses TLS not SSL
-          tls: true                               # ← enable TLS for Outlook
+          server_address: smtp.gmail.com      # ← Outlook SMTP
+          server_port: 465                        # ← Outlook port
+          secure: true                         # ← Outlook uses TLS not SSL                                       
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "Playwright Test Report - ${{ job.status }}"
-          to: satish.vagvala@aifalabs.com, Sravanagouri.K@aifalabs.com  # ← team emails
+          to: satish.vagvala@aifalabs.com, Sravanagouri.K@aifalabs.com  
           from: GitHub Actions <${{ secrets.MAIL_USERNAME }}>
           body: |
             Hi Team,
